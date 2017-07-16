@@ -28,7 +28,6 @@ def merge(start, mid, end):
             j += 1
             k += 1
             
-
     while i < n1:
         a[k] = left[i]
         k += 1
