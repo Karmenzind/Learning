@@ -1,8 +1,9 @@
-# kill all phantomjs processes
+# kill processes by its name
 
 cmd_name=$0
 proc_name=$1
-echo $proc_name "is to be killed"
+echo $proc_name "is to be killed
+"
 
 IFS='
 '
