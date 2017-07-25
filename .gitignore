@@ -1,4 +1,5 @@
 *.out
 *.pyc
 tmp.*
-.idea
+*.idea*
+*.log
