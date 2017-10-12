@@ -10,29 +10,24 @@ from keras.callbacks import CSVLogger
 from keras.utils import plot_model
 
 
-def preprocess(data, col, predictStep=1, win=100, istrain=True):  # 其中，predictStep、win、istrain为关键字参数，各自被赋予了默认值
-    """ 预处理函数
-        :param data
-        :param col
-        :param predictStep
-        :param win
-        :param istrain 是否为训练
-    """
+def preprocess(data, col, predictStep=1, win=100, istrain=True):  
     if istrain:
-        dd = data.ix[:, col].values  # ix作用为对行和列重新索引
+        dd = data.ix[:, col].values  
         x = []
         y = []
-        n = dd.shape[0]  # 读取矩阵dd第一维度的长度
+        n = dd.shape[0]  
         for i in range(n - win - predictStep + 1):
-            x.append(dd[i:i + win].reshape((1, -1))) # append的作用是在列表中添加元素
+            x.append(dd[i:i + win].reshape((1, -1))) 
             y.append(dd[i + win + predictStep - 1].reshape((1, 1)))
-        try:  # 尝试
+
+        try:  
             x = np.concatenate(x)
             y = np.concatenate(y)
-        except:  # 如果捕获到错误
+        except:  
             x = []
             y = []
         return x, y
+
     else:
         if data.shape[0] < win:
             return [], []
@@ -44,102 +39,53 @@ def preprocess(data, col, predictStep=1, win=100, istrain=True):  # 其中，pre
 
 
 def make_model(inputDim=100):
-    """
-    :param inputDim 输入矩阵的维度，具体含义根据层的类型而定
-
-    此处所添加的层均没有传入batch，即采用随机值
-    """
-    '''
-    # 采用了keras提供的序贯模型
-    '''
     model = Sequential()  
-    '''
-    # 增加一个稠密层，激活函数采用relu(线性修正)
-    此处的inputdim用作输入层神经元数100
-    '''
     model.add(Dense(100, activation='relu', input_shape=(inputDim,)))
-    '''
-    此层用于矩阵形状调整
-    第一个参数 (100,1) 即reshape要达到的目标: length为100的序列，通道数为1
-    '''
     model.add(Reshape((100, 1)))  
-    '''
-    #  增加一个一维卷积层，前两个10分别为filters（过滤）和kernel_size（卷积核大小）
-    '''
     model.add(Conv1D(10, 10, padding='valid', activation='relu'))
-    '''
-    此处注释掉的，是一个池化层
-    '''
-    # model.add(AveragePooling1D(pool_siz=2, strides=2, padding='valid'))
     model.add(Conv1D(10, 10, padding='valid', activation='relu'))
-    # 增加形状调整层
     model.add(Reshape((-1,)))
-    # 增加稠密层
     model.add(Dense(1, activation='linear'))
     model.compile(loss='mean_squared_error', optimizer='Adadelta')
     return model
 
 
 def train(arg):
-    # data
-    files = os.listdir(arg.datapath)  # 获取给定的datapath路径下所有文件，为一个包含文件名的列表
-    x = []  # 创建x和y两个列表
+    
+    files = os.listdir(arg.datapath)  
+    x = []  
     y = []
-    for f in files:  # 针对files中的每一个文件f
-        f_full_path = os.path.join(arg.datapath, f)  # 获得f的绝对路径
-        data = pd.read_excel(f_full_path)  # 用pandas提供的读取excel函数read_excel，将f中的内容存储为矩阵data
-        for i in range(4):  # 把for包裹的代码块执行四次，四个循环中，i分别为0、1、2、3
+    for f in files:  
+        f_full_path = os.path.join(arg.datapath, f)  
+        data = pd.read_excel(f_full_path)  
+        for i in range(4):  
             xx, yy = preprocess(data,
                                 i + 1,
                                 predictStep=arg.predictStep,
-                                win=100)  # 此处调用preprocess，传入data，设定col为i+1，predictStep即命令行调用时候传入的值，
-            #  TODO:win
-            # 此时，xx和yy分别为
-            if len(xx) > 0:  # 只有当xx不为空时候
-                x.append(xx)  # append方法作用为给列表增加一个元素，也就是将xx放入x
+                                win=100)  
+            
+            
+            if len(xx) > 0:  
+                x.append(xx)  
                 y.append(yy)
 
-    """
-    np.concatenate函数用于数组拼接，返回拼接后的数组，效果如下：
-    axis参数指定拼接的轴，默认为0，即列方向
-    >>> a = np.array([[1, 2], [3, 4]])
-    >>> b = np.array([[5, 6]])
-    >>> np.concatenate((a, b), axis=0)
-    array([[1, 2],
-           [3, 4],
-           [5, 6]])
-    >>> np.concatenate((a, b.T), axis=1)
-    array([[1, 2, 5],
-           [3, 4, 6]])
-    """
-    x = np.concatenate(x)  # 拼接后，赋给x
+    x = np.concatenate(x)  
     y = np.concatenate(y)
 
-    trainN = int(x.shape[0] * 0.9)  # 乘以0.9之后向左取整
-    id = np.arange(x.shape[0])  # arrange作用为创建等差数组，长度为shape_0
-    np.random.shuffle(id)  # 打乱顺序
-    '''
-    # a[:b]的意思是，取列表a的前b个元素
-    进而，对于矩阵x，x[[0,2]]效果如下：
-    >>> x
-    array([[1, 2],
-           [3, 4],
-           [5, 6]])
-    >>> x[[0,2]]
-    array([[1, 2],
-           [5, 6]])
-    '''
+    trainN = int(x.shape[0] * 0.9)  
+    id = np.arange(x.shape[0])  
+    np.random.shuffle(id)  
     trainX = x[id[:trainN]]
     trainY = y[id[:trainN]]
 
     testX = x[id[trainN:]]
     testY = y[id[trainN:]]
 
-    # pdb.set_trace()
-    # generate model
+    
+    
     model = make_model()
 
-    # fit model
+    
     print("start training model ...")
     csv_logger = CSVLogger('training.log')
 
@@ -169,7 +115,7 @@ def test(arg):
 
     model1 = load_model(arg.modelfile1)
     model2 = load_model(arg.modelfile2)
-    # data
+    
     files = os.listdir(arg.datapath)
     x = []
     y = []
@@ -212,13 +158,6 @@ def draw():
 
 
 def parse_cmd():
-    """ 增加命令行控制
-        举例：
-        parser.add_argument('--echo', dest='echo', default=10, type=int)
-        在命令中输入 --echo 1，则程序中arg的echo属性就会被赋予整形1
-        假如不输入，则默认取default，即10
-        此函数与主程序功能无关，暂不作详解
-    """
     parser = argparse.ArgumentParser()
     parser.add_argument('--cmd', dest='cmd', help='train or test')
     parser.add_argument('--predictStep', dest='predictStep', type=int)
@@ -232,8 +171,7 @@ def parse_cmd():
 
 if __name__ == '__main__':
     arg = parse_cmd()
-    # pdb.set_trace()
-    if arg.cmd == 'train':  # --cmd后接输入为train时
+    if arg.cmd == 'train':  
         train(arg)
     elif arg.cmd == 'test':
         test(arg)
