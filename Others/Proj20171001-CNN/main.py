@@ -45,8 +45,10 @@ def preprocess(data, col, predictStep=1, win=100, istrain=True):  # 其中，pre
 
 def make_model(inputDim=100):
     """
+    inputDim
     """
     model = Sequential()  # 建立一个序贯模型
+    # 增加一个全连接层，即稠密层，激活函数采用relu
     model.add(Dense(100, activation='relu', input_shape=(inputDim,)))
     model.add(Reshape((100, 1)))
     model.add(Conv1D(10, 10, padding='valid', activation='relu'))
