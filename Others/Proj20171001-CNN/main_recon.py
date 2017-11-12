@@ -10,38 +10,38 @@ from keras.callbacks import CSVLogger
 from keras.utils import plot_model
 
 
-def preprocess(data, col, predictStep=1, win=100, istrain=True):  
+def preprocess(data, col, predict_step=1, win=100, istrain=True):
     if istrain:
-        dd = data.ix[:, col].values  
+        dd = data.ix[:, col].values
         x = []
         y = []
-        n = dd.shape[0]  
-        for i in range(n - win - predictStep + 1):
-            x.append(dd[i:i + win].reshape((1, -1))) 
-            y.append(dd[i + win + predictStep - 1].reshape((1, 1)))
+        n = dd.shape[0]
+        for i in range(n - win - predict_step + 1):
+            x.append(dd[i:i + win].reshape((1, -1)))
+            y.append(dd[i + win + predict_step - 1].reshape((1, 1)))
 
-        try:  
+        try:
             x = np.concatenate(x)
             y = np.concatenate(y)
-        except:  
+        except:
             x = []
             y = []
         return x, y
 
-    else:
-        if data.shape[0] < win:
-            return [], []
-        dd = data.ix[:, col].values
-        n = dd.shape[0]
-        x = dd[n - win:].reshape((1, -1))
-        lastx = dd[n - 1]
-        return x, lastx
+    if data.shape[0] < win:
+        return [], []
+
+    dd = data.ix[:, col].values
+    n = dd.shape[0]
+    x = dd[n - win:].reshape((1, -1))
+    lastx = dd[n - 1]
+    return x, lastx
 
 
-def make_model(inputDim=100):
-    model = Sequential()  
-    model.add(Dense(100, activation='relu', input_shape=(inputDim,)))
-    model.add(Reshape((100, 1)))  
+def make_model(input_dim=100):
+    model = Sequential()
+    model.add(Dense(100, activation='relu', input_shape=(input_dim,)))
+    model.add(Reshape((100, 1)))
     model.add(Conv1D(10, 10, padding='valid', activation='relu'))
     model.add(Conv1D(10, 10, padding='valid', activation='relu'))
     model.add(Reshape((-1,)))
@@ -51,41 +51,34 @@ def make_model(inputDim=100):
 
 
 def train(arg):
-    
-    files = os.listdir(arg.datapath)  
-    x = []  
+    x = []
     y = []
-    for f in files:  
-        f_full_path = os.path.join(arg.datapath, f)  
-        data = pd.read_excel(f_full_path)  
-        for i in range(4):  
+    for f in os.listdir(arg.datapath):
+        data = pd.read_excel(os.path.join(arg.datapath, f))
+        for i in range(4):
             xx, yy = preprocess(data,
                                 i + 1,
-                                predictStep=arg.predictStep,
-                                win=100)  
-            
-            
-            if len(xx) > 0:  
-                x.append(xx)  
+                                predict_step=arg.predictStep,
+                                win=100)
+
+            if len(xx) > 0:
+                x.append(xx)
                 y.append(yy)
 
-    x = np.concatenate(x)  
+    x = np.concatenate(x)
     y = np.concatenate(y)
 
-    trainN = int(x.shape[0] * 0.9)  
-    id = np.arange(x.shape[0])  
-    np.random.shuffle(id)  
+    trainN = int(x.shape[0] * 0.9)
+    id = np.arange(x.shape[0])
+    np.random.shuffle(id)
     trainX = x[id[:trainN]]
     trainY = y[id[:trainN]]
 
     testX = x[id[trainN:]]
     testY = y[id[trainN:]]
 
-    
-    
     model = make_model()
 
-    
     print("start training model ...")
     csv_logger = CSVLogger('training.log')
 
@@ -112,15 +105,14 @@ def train(arg):
 
 
 def test(arg):
-
     model1 = load_model(arg.modelfile1)
     model2 = load_model(arg.modelfile2)
-    
-    files = os.listdir(arg.datapath)
+
     x = []
     y = []
     llbname = []
-    for f in files:
+
+    for f in os.listdir(arg.datapath):
         data = pd.read_excel(os.path.join(arg.datapath, f))
         if data.shape[0] < 100:
             continue
@@ -130,7 +122,7 @@ def test(arg):
         for i in range(4):
             xx, xlast = preprocess(data,
                                    i + 1,
-                                   predictStep=arg.predictStep,
+                                   predict_step=arg.predictStep,
                                    win=100,
                                    istrain=False)
             py1 = model1.predict(xx)
@@ -144,16 +136,15 @@ def test(arg):
     x = np.array(x)
     y = np.array(y)
     result = np.concatenate((x, y), axis=1)
-    result = result.tolist()
-    result = [[str(xx) for xx in ll] for ll in result]
-    fh = open(arg.output, 'w')
-    for i in range(len(result)):
-        fh.write(llbname[i] + ',' + ','.join(result[i]) + '\n')
-    fh.close()
+    with open(arg.output, 'w') as fh:
+        for i, ll in enumerate(result.tolist()):
+            items = ','.join(str(xx) for xx in ll)
+            line = '{},{}\n'.format(llbname[i], items)
+            fh.write(line)
 
 
 def draw():
-    model = make_model(inputDim=100)
+    model = make_model(input_dim=100)
     plot_model(model, to_file='model.png', show_shapes=True)
 
 
@@ -171,7 +162,7 @@ def parse_cmd():
 
 if __name__ == '__main__':
     arg = parse_cmd()
-    if arg.cmd == 'train':  
+    if arg.cmd == 'train':
         train(arg)
     elif arg.cmd == 'test':
         test(arg)
