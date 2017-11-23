@@ -206,7 +206,7 @@ def initial(arg):
             p = getattr(arg, attr) 
             absp = os.path.abspath(p)
             setattr(arg, attr, absp)
-            print("Using %s ..." % absp)
+            print("Using %s: %s ..." % (attr, absp))
             if not os.path.exists(absp):
                 os.mkdir(absp)
     print("Using echo: %s ..." % arg.echo)
