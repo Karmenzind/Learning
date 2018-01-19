@@ -230,7 +230,7 @@ def run(arg):
     exec_train_step1 = bool((arg.cmd == 'train' and arg.predictstep == 1) or not arg.cmd)
     exec_train_step2 = bool((arg.cmd == 'train' and arg.predictstep == 2) or not arg.cmd)
     exec_test = bool(arg.cmd == 'test' or not arg.cmd)
-    exec_draw = bool(arg.cmd == 'draw' or not arg.cmd)
+    exec_draw = bool(arg.cmd == 'draw')
     initial(arg)
 
     segment = '\n------------------------------------------------------------------\n'
