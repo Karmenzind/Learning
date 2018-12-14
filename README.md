@@ -9,6 +9,7 @@ For practice.
 * [READING LIST](#reading-list)
     * [Python](#python)
 * [SRC](#src)
+* [KVM](#kvm)
 
 <!-- vim-markdown-toc -->
 
@@ -24,3 +25,11 @@ For practice.
 ## SRC
 
 - computer networking a top-down approach 7th edition https://libgen.pw/download/book/5bd993523a0446612ee719bb
+
+
+## KVM
+
+- Running MacOS
+    - http://blog.topspeedsnail.com/archives/9244
+    - https://www.jianshu.com/p/e95c458d78bd
+
